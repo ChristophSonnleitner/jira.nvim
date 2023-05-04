@@ -157,7 +157,7 @@ local jira = function(opts)
 
     pickers
         .new(opts, {
-            prompt_title = "Find Files",
+            prompt_title = opts.title,
             finder = finders.new_oneshot_job(find_command, opts),
             previewer = conf.file_previewer(opts),
             sorter = conf.file_sorter(opts),
@@ -170,7 +170,7 @@ local jira = function(opts)
                         local handle = io.popen("head -n1 " .. dir .. selection.path)
                         local result = handle:read("*a")
                         handle:close()
-                        io.popen("open -a Google\\ Chrome.app " .. result)
+                        io.popen(opts.command .. result)
                     end
                     -- actions.close(prompt_bufnr)
                 end)
