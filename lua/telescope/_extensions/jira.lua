@@ -6,6 +6,8 @@ local conf = require('telescope.config').values
 local actions = require('telescope.actions')
 local action_state = require('telescope.actions.state')
 
+local flatten = vim.tbl_flatten
+local filter = vim.tbl_filter
 
 local get_open_filelist = function(grep_open_files, cwd)
   if not grep_open_files then
