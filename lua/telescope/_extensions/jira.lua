@@ -9,6 +9,38 @@ local action_state = require('telescope.actions.state')
 local flatten = vim.tbl_flatten
 local filter = vim.tbl_filter
 
+
+local opts_contain_invert = function(args)
+  local invert = false
+  local files_with_matches = false
+
+  for _, v in ipairs(args) do
+    if v == "--invert-match" then
+      invert = true
+    elseif v == "--files-with-matches" or v == "--files-without-match" then
+      files_with_matches = true
+    end
+
+    if #v >= 2 and v:sub(1, 1) == "-" and v:sub(2, 2) ~= "-" then
+      local non_option = false
+      for i = 2, #v do
+        local vi = v:sub(i, i)
+        if vi == "=" then -- ignore option -g=xxx
+          break
+        elseif vi == "g" or vi == "f" or vi == "m" or vi == "e" or vi == "r" or vi == "t" or vi == "T" then
+          non_option = true
+        elseif non_option == false and vi == "v" then
+          invert = true
+        elseif non_option == false and vi == "l" then
+          files_with_matches = true
+        end
+      end
+    end
+  end
+  return invert, files_with_matches
+end
+
+
 local get_open_filelist = function(grep_open_files, cwd)
   if not grep_open_files then
     return nil
