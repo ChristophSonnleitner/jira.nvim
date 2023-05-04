@@ -10,6 +10,7 @@ local action_state = require('telescope.actions.state')
 local jira = function(opts)
     opts = opts or {}
     opts.entry_maker = make_entry.gen_from_file(opts)
+    local dir = "~/Jira/myTickets/"
     opts.search_dirs = { "~/Jira/myTickets" }
     pickers.new(opts, {
         prompt_title = "My Jira Tickets",
