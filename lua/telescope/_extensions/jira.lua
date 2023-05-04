@@ -7,35 +7,87 @@ local actions = require('telescope.actions')
 local action_state = require('telescope.actions.state')
 
 
-local jira_old = function(opts)
-    opts = opts or {}
-    opts.entry_maker = make_entry.gen_from_file(opts)
-    local dir = "~/Jira/myTickets/"
-    opts.search_dirs = { "~/Jira/myTickets" }
-    pickers.new(opts, {
-        prompt_title = "My Jira Tickets",
-        finder = finders.new_oneshot_job({ "ls", vim.fn.expand("~/Jira/myTickets") }, opts),
-        previewer = conf.file_previewer(opts),
-        sorter = conf.file_sorter(opts),
-        attach_mappings = function(prompt_bufnr, map)
-            actions.select_default:replace(function()
-                local selection = action_state.get_selected_entry()
-                local current_line = action_state.get_current_line()
-                print(selection.path)
-                if (selection ~= nil) then
-                    local handle = io.popen("head -n1 " .. dir .. selection.path)
-                    local result = handle:read("*a")
-                    handle:close()
-                    io.popen("open -a Google\\ Chrome.app " .. result)
-                end
-                -- actions.close(prompt_bufnr)
-            end)
-            return true
-        end,
-    }):find()
-end
+local live_grep = function(opts)
+    local vimgrep_arguments = opts.vimgrep_arguments or conf.vimgrep_arguments
+    local search_dirs = opts.search_dirs
+    local grep_open_files = opts.grep_open_files
+    opts.cwd = opts.cwd and vim.fn.expand(opts.cwd) or vim.loop.cwd()
 
-local jira = function(opts)
+    local filelist = get_open_filelist(grep_open_files, opts.cwd)
+    if search_dirs then
+        for i, path in ipairs(search_dirs) do
+            search_dirs[i] = vim.fn.expand(path)
+        end
+    end
+
+    local additional_args = {}
+    if opts.additional_args ~= nil then
+        if type(opts.additional_args) == "function" then
+            additional_args = opts.additional_args(opts)
+        elseif type(opts.additional_args) == "table" then
+            additional_args = opts.additional_args
+        end
+    end
+
+    if opts.type_filter then
+        additional_args[#additional_args + 1] = "--type=" .. opts.type_filter
+    end
+
+    if type(opts.glob_pattern) == "string" then
+        additional_args[#additional_args + 1] = "--glob=" .. opts.glob_pattern
+    elseif type(opts.glob_pattern) == "table" then
+        for i = 1, #opts.glob_pattern do
+            additional_args[#additional_args + 1] = "--glob=" .. opts.glob_pattern[i]
+        end
+    end
+
+    local args = flatten { vimgrep_arguments, additional_args }
+    opts.__inverted, opts.__matches = opts_contain_invert(args)
+
+    local live_grepper = finders.new_job(function(prompt)
+        if not prompt or prompt == "" then
+            return nil
+        end
+
+        local search_list = {}
+
+        if grep_open_files then
+            search_list = filelist
+        elseif search_dirs then
+            search_list = search_dirs
+        end
+
+        return flatten { args, "--", prompt, search_list }
+    end, opts.entry_maker or make_entry.gen_from_vimgrep(opts), opts.max_results, opts.cwd)
+
+    pickers
+        .new(opts, {
+            prompt_title = "Live Grep",
+            finder = live_grepper,
+            previewer = conf.grep_previewer(opts),
+            -- TODO: It would be cool to use `--json` output for this
+            -- and then we could get the highlight positions directly.
+            sorter = sorters.highlighter_only(opts),
+
+            attach_mappings = function(_, map)
+                map("i", "<c-space>", actions.to_fuzzy_refine)
+                actions.select_default:replace(function()
+                    local selection = action_state.get_selected_entry()
+                    local current_line = action_state.get_current_line()
+                    if (selection ~= nil) then
+                        local handle = io.popen("head -n1 " .. selection.path)
+                        local result = handle:read("*a")
+                        handle:close()
+                        io.popen(opts.command .. " " .. result)
+                    end
+                    -- actions.close(prompt_bufnr)
+                end)
+                return true
+            end,
+        })
+        :find()
+end
+local find_files = function(opts)
     local find_command = (function()
         if opts.find_command then
             if type(opts.find_command) == "function" then
@@ -165,12 +217,11 @@ local jira = function(opts)
                 actions.select_default:replace(function()
                     local selection = action_state.get_selected_entry()
                     local current_line = action_state.get_current_line()
-                    print(selection.path)
                     if (selection ~= nil) then
                         local handle = io.popen("head -n1 " .. selection.path)
                         local result = handle:read("*a")
                         handle:close()
-                        io.popen(opts.command.. " " .. result)
+                        io.popen(opts.command .. " " .. result)
                     end
                     -- actions.close(prompt_bufnr)
                 end)
@@ -179,5 +230,15 @@ local jira = function(opts)
         })
         :find()
 end
+
+
+local jira = function(opts)
+    if opts.type == "grep" then
+        live_grep(opts)
+    else
+        find_files(opts)
+    end
+end
+
 
 return telescope.register_extension({ exports = { jira = jira } })
