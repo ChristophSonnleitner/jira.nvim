@@ -20,9 +20,12 @@ local jira = function(opts)
             actions.select_default:replace(function()
                 local selection = action_state.get_selected_entry()
                 local current_line = action_state.get_current_line()
-
+                print(selection.path)
                 if (selection ~= nil) then
-                    utils.get_os_command_output({ "ftux_param", selection[1] }, git_root)
+                    local handle = io.popen("head -n1 " .. selection.path)
+                    local result = handle:read("*a")
+                    handle:close()
+                    io.popen("open -na Google\\ Chrome.app " .. result)
                 end
                 -- actions.close(prompt_bufnr)
             end)
