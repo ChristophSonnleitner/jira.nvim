@@ -7,6 +7,29 @@ local actions = require('telescope.actions')
 local action_state = require('telescope.actions.state')
 
 
+local get_open_filelist = function(grep_open_files, cwd)
+  if not grep_open_files then
+    return nil
+  end
+
+  local bufnrs = filter(function(b)
+    if 1 ~= vim.fn.buflisted(b) then
+      return false
+    end
+    return true
+  end, vim.api.nvim_list_bufs())
+  if not next(bufnrs) then
+    return
+  end
+
+  local filelist = {}
+  for _, bufnr in ipairs(bufnrs) do
+    local file = vim.api.nvim_buf_get_name(bufnr)
+    table.insert(filelist, Path:new(file):make_relative(cwd))
+  end
+  return filelist
+end
+
 local live_grep = function(opts)
     local vimgrep_arguments = opts.vimgrep_arguments or conf.vimgrep_arguments
     local search_dirs = opts.search_dirs
