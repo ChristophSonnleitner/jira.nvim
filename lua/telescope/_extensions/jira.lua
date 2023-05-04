@@ -10,10 +10,10 @@ local action_state = require('telescope.actions.state')
 local jira = function(opts)
     opts = opts or {}
     opts.entry_maker = make_entry.gen_from_file(opts)
-    opts.search_dirs = { "~/Jira/myTicktes" }
+    opts.search_dirs = { "~/Jira/myTickets" }
     pickers.new(opts, {
         prompt_title = "My Jira Tickets",
-        finder = finders.new_oneshot_job({"ls", vim.fn.expand("~/Jira/myTicktes")}, opts),
+        finder = finders.new_oneshot_job({"ls", vim.fn.expand("~/Jira/myTickets")}, opts),
         previewer = conf.file_previewer(opts),
         sorter = conf.file_sorter(opts),
         attach_mappings = function(prompt_bufnr, map)
