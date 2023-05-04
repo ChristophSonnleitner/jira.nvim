@@ -26,7 +26,7 @@ local jira = function(opts)
                     local handle = io.popen("head -n1 " .. dir .. selection.path)
                     local result = handle:read("*a")
                     handle:close()
-                    io.popen("open -na Google\\ Chrome.app " .. result)
+                    io.popen("open -a Google\\ Chrome.app " .. result)
                 end
                 -- actions.close(prompt_bufnr)
             end)
