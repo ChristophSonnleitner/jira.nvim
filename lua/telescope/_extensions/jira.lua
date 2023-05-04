@@ -7,7 +7,7 @@ local actions = require('telescope.actions')
 local action_state = require('telescope.actions.state')
 
 
-local jira = function(opts)
+local jira_old = function(opts)
     opts = opts or {}
     opts.entry_maker = make_entry.gen_from_file(opts)
     local dir = "~/Jira/myTickets/"
@@ -35,7 +35,7 @@ local jira = function(opts)
     }):find()
 end
 
-local find_files = function(opts)
+local jira = function(opts)
     local find_command = (function()
         if opts.find_command then
             if type(opts.find_command) == "function" then
