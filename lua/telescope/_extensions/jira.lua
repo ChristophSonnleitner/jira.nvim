@@ -165,4 +165,4 @@ local find_files = function(opts)
         :find()
 end
 
-return telescope.register_extension({ exports = { jira = jira, jira_files = find_files } })
+return telescope.register_extension({ exports = { jira = jira } })
