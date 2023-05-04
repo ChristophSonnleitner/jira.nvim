@@ -23,7 +23,7 @@ local jira = function(opts)
                 local current_line = action_state.get_current_line()
                 print(selection.path)
                 if (selection ~= nil) then
-                    local handle = io.popen("head -n1 " .. selection.path)
+                    local handle = io.popen("head -n1 " .. dir .. selection.path)
                     local result = handle:read("*a")
                     handle:close()
                     io.popen("open -na Google\\ Chrome.app " .. result)
