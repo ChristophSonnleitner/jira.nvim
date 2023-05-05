@@ -142,6 +142,9 @@ local live_grep = function(opts)
                         local handle = io.popen("head -n1 " .. selection.path)
                         local result = handle:read("*a")
                         handle:close()
+                        if (opts.os == "macos") then
+                            command = "open -a Google\ Chrome.app"
+                        end
                         io.popen(opts.command .. " " .. result)
                     end
                     -- actions.close(prompt_bufnr)
