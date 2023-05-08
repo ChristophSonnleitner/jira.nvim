@@ -146,7 +146,7 @@ local live_grep = function(opts)
                             if (opts.browser == "chrome") then
                                 opts.command = "open -a Google\\ Chrome.app"
                             else
-                                opts.command = "opan -a Safari.app"
+                                opts.command = "open -a Safari.app"
                             end
                         end
                         io.popen(opts.command .. " " .. result)
@@ -297,7 +297,7 @@ local find_files = function(opts)
                             if (opts.browser == "chrome") then
                                 opts.command = "open -a Google\\ Chrome.app"
                             else
-                                opts.command = "opan -a Safari.app"
+                                opts.command = "open -a Safari.app"
                             end
                         end
                         io.popen(opts.command .. " " .. result)
