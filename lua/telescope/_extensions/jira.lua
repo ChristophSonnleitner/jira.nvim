@@ -18,57 +18,57 @@ local filter = vim.tbl_filter
 
 
 local opts_contain_invert = function(args)
-  local invert = false
-  local files_with_matches = false
+    local invert = false
+    local files_with_matches = false
 
-  for _, v in ipairs(args) do
-    if v == "--invert-match" then
-      invert = true
-    elseif v == "--files-with-matches" or v == "--files-without-match" then
-      files_with_matches = true
-    end
-
-    if #v >= 2 and v:sub(1, 1) == "-" and v:sub(2, 2) ~= "-" then
-      local non_option = false
-      for i = 2, #v do
-        local vi = v:sub(i, i)
-        if vi == "=" then -- ignore option -g=xxx
-          break
-        elseif vi == "g" or vi == "f" or vi == "m" or vi == "e" or vi == "r" or vi == "t" or vi == "T" then
-          non_option = true
-        elseif non_option == false and vi == "v" then
-          invert = true
-        elseif non_option == false and vi == "l" then
-          files_with_matches = true
+    for _, v in ipairs(args) do
+        if v == "--invert-match" then
+            invert = true
+        elseif v == "--files-with-matches" or v == "--files-without-match" then
+            files_with_matches = true
         end
-      end
+
+        if #v >= 2 and v:sub(1, 1) == "-" and v:sub(2, 2) ~= "-" then
+            local non_option = false
+            for i = 2, #v do
+                local vi = v:sub(i, i)
+                if vi == "=" then -- ignore option -g=xxx
+                    break
+                elseif vi == "g" or vi == "f" or vi == "m" or vi == "e" or vi == "r" or vi == "t" or vi == "T" then
+                    non_option = true
+                elseif non_option == false and vi == "v" then
+                    invert = true
+                elseif non_option == false and vi == "l" then
+                    files_with_matches = true
+                end
+            end
+        end
     end
-  end
-  return invert, files_with_matches
+    return invert, files_with_matches
 end
 
 
 local get_open_filelist = function(grep_open_files, cwd)
-  if not grep_open_files then
-    return nil
-  end
-
-  local bufnrs = filter(function(b)
-    if 1 ~= vim.fn.buflisted(b) then
-      return false
+    if not grep_open_files then
+        return nil
     end
-    return true
-  end, vim.api.nvim_list_bufs())
-  if not next(bufnrs) then
-    return
-  end
 
-  local filelist = {}
-  for _, bufnr in ipairs(bufnrs) do
-    local file = vim.api.nvim_buf_get_name(bufnr)
-    table.insert(filelist, Path:new(file):make_relative(cwd))
-  end
-  return filelist
+    local bufnrs = filter(function(b)
+        if 1 ~= vim.fn.buflisted(b) then
+            return false
+        end
+        return true
+    end, vim.api.nvim_list_bufs())
+    if not next(bufnrs) then
+        return
+    end
+
+    local filelist = {}
+    for _, bufnr in ipairs(bufnrs) do
+        local file = vim.api.nvim_buf_get_name(bufnr)
+        table.insert(filelist, Path:new(file):make_relative(cwd))
+    end
+    return filelist
 end
 
 local live_grep = function(opts)
@@ -143,7 +143,11 @@ local live_grep = function(opts)
                         local result = handle:read("*a")
                         handle:close()
                         if (opts.os == "macos") then
-                            opts.command = "open -a Google\\ Chrome.app"
+                            if (opts.browser == "chrome") then
+                                opts.command = "open -a Google\\ Chrome.app"
+                            else
+                                opts.command = "opan -a Safari.app"
+                            end
                         end
                         io.popen(opts.command .. " " .. result)
                     end
@@ -284,10 +288,18 @@ local find_files = function(opts)
                 actions.select_default:replace(function()
                     local selection = action_state.get_selected_entry()
                     local current_line = action_state.get_current_line()
+
                     if (selection ~= nil) then
                         local handle = io.popen("head -n1 " .. selection.path)
                         local result = handle:read("*a")
                         handle:close()
+                        if (opts.os == "macos") then
+                            if (opts.browser == "chrome") then
+                                opts.command = "open -a Google\\ Chrome.app"
+                            else
+                                opts.command = "opan -a Safari.app"
+                            end
+                        end
                         io.popen(opts.command .. " " .. result)
                     end
                     -- actions.close(prompt_bufnr)
