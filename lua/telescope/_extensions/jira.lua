@@ -20,81 +20,82 @@ local filter = vim.tbl_filter
 local Sorter = require('telescope.sorters').Sorter
 
 local deduplicated_highlighter_only = function(opts)
-  opts = opts or {}
-  local fzy = opts.fzy_mod or require "telescope.algos.fzy"
+    opts = opts or {}
+    local fzy = opts.fzy_mod or require "telescope.algos.fzy"
 
-  -- Create a cache to store unique entries
-  local deduplicated_cache = {}
+    -- Create a cache to store unique entries
+    local deduplicated_cache = {}
 
-  return Sorter:new {
-    scoring_function = function(_, _, display)
-      if deduplicated_cache[display] then
-        -- If the entry is already in the cache, return a low score to mark it as a duplicate
-        return -1
-      else
-        -- If the entry is not in the cache, add it and return a high score to keep it
-        deduplicated_cache[display] = true
-        return 1
-      end
-    end,
+    return Sorter:new {
+        scoring_function = function(_, _, display)
+            if deduplicated_cache[display] then
+                -- If the entry is already in the cache, return a low score to mark it as a duplicate
+                return -1
+            else
+                -- If the entry is not in the cache, add it and return a high score to keep it
+                deduplicated_cache[display] = true
+                return 1
+            end
+        end,
 
-    highlighter = function(_, prompt, display)
-      return fzy.positions(prompt, display)
-    end,
-  }
+        highlighter = function(_, prompt, display)
+            return fzy.positions(prompt, display)
+        end,
+    }
 end
 
 local function make_distinct()
-  local seen = {}
-  return function(entry)
-    if not seen[entry] then
-      seen[entry] = true
-      return false
+    local seen = {}
+    return function(entry)
+        if not seen[entry] then
+            seen[entry] = true
+            return false
+        end
+        return true
     end
-    return true
-  end
 end
 
 highlighter_only_distinct = function(opts)
-  opts = opts or {}
-  local fzy = opts.fzy_mod or require "telescope.algos.fzy"
+    opts = opts or {}
+    local fzy = opts.fzy_mod or require "telescope.algos.fzy"
 
-  local is_duplicate = make_distinct()
+    local is_duplicate = make_distinct()
 
-  return Sorter:new {
-    scoring_function = function(_, prompt, _, entry)
-      if is_duplicate(entry.ordinal) then
-        return -1
-      end
-      return 1
-    end,
+    return Sorter:new {
+        scoring_function = function(_, prompt, _, entry)
+            if is_duplicate(entry.ordinal) then
+                return -1
+            end
+            return 1
+        end,
 
-    highlighter = function(_, prompt, display)
-      return fzy.positions(prompt, display)
-    end,
-  }
+        highlighter = function(_, prompt, display)
+            return fzy.positions(prompt, display)
+        end,
+    }
 end
 
 local function rg_content_and_name(opts)
-  opts = opts or {}
+    opts = opts or {}
 
-  local word = opts.word or ""
-  local cmd = "(rg --color=always --line-number --hidden --follow --glob '!.git' " .. word .. "; rg --color=always --files --hidden --follow --glob '!.git' | rg --color=always " .. word .. ") | sort -u"
-
-  pickers.new(opts, {
-    prompt_title = 'Ripgrep Content and Name',
-    finder = finders.new_oneshot_job(
-      vim.fn.split(cmd, " "),
-      opts
-    ),
-    sorter = sorters.highlighter_only(opts),
-    previewer = previewers.vimgrep.new(opts),
-    attach_mappings = function(_, map)
-      map('i', '<CR>', actions.select_default)
-      map('n', '<CR>', actions.select_default)
-      return true
-    end,
-  }):find()
+    local word = opts.word or ""
+    local cmd1 = "(rg --color=always --line-number --hidden --follow --glob '!.git' " ..
+    word .. "; rg --color=always --files --hidden --follow --glob '!.git' | rg --color=always " .. word .. ") | sort -u"
+    local cmd = "rg -l " .. word .. " && find \"directory_path\" -type f -iname \"*" .. word .. "*\" | sort | uniq"
+    pickers.new(opts, {
+        prompt_title = 'Ripgrep Content and Name',
+        finder = finders.new_oneshot_job(
+            vim.fn.split(cmd, " "),
+            opts
+        ),
+        sorter = sorters.highlighter_only(opts),
+        previewer = previewers.vimgrep.new(opts),
+        attach_mappings = function(_, map)
+            map('i', '<CR>', actions.select_default)
+            map('n', '<CR>', actions.select_default)
+            return true
+        end,
+    }):find()
 end
 
 
@@ -209,7 +210,7 @@ local live_grep_files = function(opts)
             prompt, search_list }
         local search_file_name = flatten { { "rg", "--color=never", "--files", "--hidden", "--follow", "|", "rg",
             "--color=never", "-l" }, prompt, search_list }
-        local search_command = flatten {search_file_content, ";", search_file_name}
+        local search_command = flatten { search_file_content, ";", search_file_name }
         -- return flatten { { "rg", "--color=never", "--no-heading", "--with-filename", "--line-number", "--column", "--smart-case", "-l"}, "--", prompt, search_list }
         return search_command
     end
@@ -223,7 +224,7 @@ local live_grep_files = function(opts)
             -- and then we could get the highlight positions directly.
             -- sorter = sorters.highlighter_only(opts),
             -- sorter = deduplicated_highlighter_only(opts),
-               sorter = highlighter_only_distinct(opts),
+            sorter = highlighter_only_distinct(opts),
 
             attach_mappings = function(_, map)
                 map("i", "<c-space>", actions.to_fuzzy_refine)
