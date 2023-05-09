@@ -126,6 +126,7 @@ local live_grep_files = function(opts)
         local search_file_name = {"rg", "--color=never", "--files", "--hidden", "--follow", "-l", "--glob", "'!.git'","|", "rg", "--color=always", "-l", prompt, search_list}
         local search_command = flatten {{"("}, search_file_content, {";"}, search_file_name, {")","|", "sort", "-u"} }
         print (search_command)
+        io.popen(search_command.."> test.txt")
         -- return flatten { { "rg", "--color=never", "--no-heading", "--with-filename", "--line-number", "--column", "--smart-case", "-l"}, "--", prompt, search_list }
         return search_command
     end
