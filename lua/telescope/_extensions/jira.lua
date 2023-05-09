@@ -110,9 +110,9 @@ local live_grep_files = function(opts)
     opts.__inverted, opts.__matches = opts_contain_invert(args)
 
     local find_command = function(prompt)
-        -- if not prompt or prompt == "" then
-        --     return nil
-        -- end
+        if not prompt or prompt == "" then
+            return nil
+        end
 
         local search_list = {}
 
