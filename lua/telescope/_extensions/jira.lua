@@ -498,8 +498,8 @@ local jira = function(opts)
     if opts.type == "grep" then
         live_grep(opts)
     elseif opts.type == "grep_files" then
-        live_grep_files(opts)
-        -- rg_content_and_name(opts)
+        -- live_grep_files(opts)
+        rg_content_and_name(opts)
     else
         find_files(opts)
     end
