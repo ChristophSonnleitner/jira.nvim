@@ -167,8 +167,8 @@ local live_grep_files = function(opts)
             previewer = conf.grep_previewer(opts),
             -- TODO: It would be cool to use `--json` output for this
             -- and then we could get the highlight positions directly.
-            -- sorter = sorters.highlighter_only(opts),
-            sorter = deduplicated_highlighter_only(opts),
+            sorter = sorters.highlighter_only(opts),
+            -- sorter = deduplicated_highlighter_only(opts),
 
             attach_mappings = function(_, map)
                 map("i", "<c-space>", actions.to_fuzzy_refine)
