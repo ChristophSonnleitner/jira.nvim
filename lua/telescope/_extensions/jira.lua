@@ -214,7 +214,7 @@ local live_grep_files = function(opts)
         local search_command = flatten { search_file_content, ";", search_file_name }
         local new_search_command = flatten {{'find_content_or_name'}, prompt, search_list}
         -- return flatten { { "rg", "--color=never", "--no-heading", "--with-filename", "--line-number", "--column", "--smart-case", "-l"}, "--", prompt, search_list }
-        return new_search_command
+        return search_command
     end
 
     pickers
@@ -498,8 +498,8 @@ local jira = function(opts)
     if opts.type == "grep" then
         live_grep(opts)
     elseif opts.type == "grep_files" then
-        -- live_grep_files(opts)
-        rg_content_and_name(opts)
+        live_grep_files(opts)
+        -- rg_content_and_name(opts)
     else
         find_files(opts)
     end
