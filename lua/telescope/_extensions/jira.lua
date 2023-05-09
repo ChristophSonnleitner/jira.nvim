@@ -213,7 +213,7 @@ local live_grep_files = function(opts)
             "--color=never", "-l" }, prompt, search_list }
         local search_command = flatten { search_file_content, ";", search_file_name }
         local new_search_command = flatten {{'find_content_or_name'}, prompt, search_list}
-        return flatten { { "rg", "--color=never", "--no-heading", "--with-filename", "--line-number", "--column", "--smart-case", "-l"}, "--", prompt, search_list }
+        return flatten { { "rg", "--color=never", "--no-heading", "--with-filename", "--line-number", "--column", "--smart-case", "-l", "-u"}, "--", prompt, search_list }
         -- return search_command
     end
 
