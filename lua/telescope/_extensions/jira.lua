@@ -82,6 +82,7 @@ local function rg_content_and_name(opts)
     local cmd1 = "(rg --color=always --line-number --hidden --follow --glob '!.git' " ..
     word .. "; rg --color=always --files --hidden --follow --glob '!.git' | rg --color=always " .. word .. ") | sort -u"
     local cmd = "rg -l " .. word .. " && find \"directory_path\" -type f -iname \"*" .. word .. "*\" | sort | uniq"
+    local cmd = "find_content_or_name ".. word .."~/Jira"
     pickers.new(opts, {
         prompt_title = 'Ripgrep Content and Name',
         finder = finders.new_oneshot_job(
