@@ -87,7 +87,7 @@ local function rg_content_and_name(opts)
       vim.fn.split(cmd, " "),
       opts
     ),
-    sorter = sorters.highlighter_only_distinct(opts),
+    sorter = sorters.highlighter_only(opts),
     previewer = previewers.vimgrep.new(opts),
     attach_mappings = function(_, map)
       map('i', '<CR>', telescope.actions.select_default)
