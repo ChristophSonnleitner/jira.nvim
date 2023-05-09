@@ -126,7 +126,7 @@ local live_grep_files = function(opts)
     pickers
         .new(opts, {
             prompt_title = "Live Grep Files",
-            finder = finders.new_oneshot_job(find_command, opts),
+            finder = finders.new_job(find_command, make_entry.gen_from_file(opts), opts.max_results, opts.cwd),
             previewer = conf.grep_previewer(opts),
             -- TODO: It would be cool to use `--json` output for this
             -- and then we could get the highlight positions directly.
