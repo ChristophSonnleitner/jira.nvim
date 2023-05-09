@@ -75,6 +75,29 @@ highlighter_only_distinct = function(opts)
   }
 end
 
+local function rg_content_and_name(opts)
+  opts = opts or {}
+
+  local word = opts.word or ""
+  local cmd = "(rg --color=always --line-number --hidden --follow --glob '!.git' " .. word .. "; rg --color=always --files --hidden --follow --glob '!.git' | rg --color=always " .. word .. ") | sort -u"
+
+  pickers.new(opts, {
+    prompt_title = 'Ripgrep Content and Name',
+    finder = finders.new_oneshot_job(
+      vim.fn.split(cmd, " "),
+      opts
+    ),
+    sorter = sorters.highlighter_only_distinct(opts),
+    previewer = previewers.vimgrep.new(opts),
+    attach_mappings = function(_, map)
+      map('i', '<CR>', telescope.actions.select_default)
+      map('n', '<CR>', telescope.actions.select_default)
+      return true
+    end,
+  }):find()
+end
+
+
 
 
 local opts_contain_invert = function(args)
@@ -472,7 +495,8 @@ local jira = function(opts)
     if opts.type == "grep" then
         live_grep(opts)
     elseif opts.type == "grep_files" then
-        live_grep_files(opts)
+        -- live_grep_files(opts)
+        rg_content_and_name(opts)
     else
         find_files(opts)
     end
