@@ -70,7 +70,96 @@ local get_open_filelist = function(grep_open_files, cwd)
     end
     return filelist
 end
+local live_grep_files = function(opts)
+    local vimgrep_arguments = opts.vimgrep_arguments or conf.vimgrep_arguments
+    local search_dirs = opts.search_dirs
+    local grep_open_files = opts.grep_open_files
+    opts.cwd = opts.cwd and vim.fn.expand(opts.cwd) or vim.loop.cwd()
 
+    local filelist = get_open_filelist(grep_open_files, opts.cwd)
+    if search_dirs then
+        for i, path in ipairs(search_dirs) do
+            search_dirs[i] = vim.fn.expand(path)
+        end
+    end
+
+    local additional_args = {}
+    if opts.additional_args ~= nil then
+        if type(opts.additional_args) == "function" then
+            additional_args = opts.additional_args(opts)
+        elseif type(opts.additional_args) == "table" then
+            additional_args = opts.additional_args
+        end
+    end
+
+    if opts.type_filter then
+        additional_args[#additional_args + 1] = "--type=" .. opts.type_filter
+    end
+
+    if type(opts.glob_pattern) == "string" then
+        additional_args[#additional_args + 1] = "--glob=" .. opts.glob_pattern
+    elseif type(opts.glob_pattern) == "table" then
+        for i = 1, #opts.glob_pattern do
+            additional_args[#additional_args + 1] = "--glob=" .. opts.glob_pattern[i]
+        end
+    end
+
+    local args = flatten { vimgrep_arguments, additional_args }
+    opts.__inverted, opts.__matches = opts_contain_invert(args)
+
+    
+
+    local live_grepper = finders.new_job(function(prompt)
+        if not prompt or prompt == "" then
+            return nil
+        end
+
+        local search_list = {}
+
+        if grep_open_files then
+            search_list = filelist
+        elseif search_dirs then
+            search_list = search_dirs
+        end
+
+        return flatten { args, "--", prompt, search_list }
+    end, opts.entry_maker or make_entry.gen_from_vimgrep(opts), opts.max_results, opts.cwd)
+
+    pickers
+        .new(opts, {
+            prompt_title = "Live Grep",
+            -- finder = live_grepper,
+            finder = finders.new_oneshot_job({ "rg", "--color=never", "--no-heading", "--with-filename", "--line-number", "--column", "--smart-case" }, opts),
+            previewer = conf.grep_previewer(opts),
+            -- TODO: It would be cool to use `--json` output for this
+            -- and then we could get the highlight positions directly.
+            sorter = sorters.highlighter_only(opts),
+
+            attach_mappings = function(_, map)
+                map("i", "<c-space>", actions.to_fuzzy_refine)
+                actions.select_default:replace(function()
+                    local selection = action_state.get_selected_entry()
+                    local current_line = action_state.get_current_line()
+                    if (selection ~= nil) then
+                        local handle = io.popen("head -n1 " .. selection.path)
+                        local result = handle:read("*a")
+                        handle:close()
+                        if (opts.os == "macos") then
+                            if (opts.browser == "chrome") then
+                                opts.command = "open -a Google\\ Chrome.app"
+                            else
+                                opts.command = "open -a Safari.app"
+                            end
+                        end
+                        io.popen(opts.command .. " " .. result)
+                    end
+                    -- actions.close(prompt_bufnr)
+                end)
+                return true
+            end,
+        })
+        :find()
+    end
 local live_grep = function(opts)
     local vimgrep_arguments = opts.vimgrep_arguments or conf.vimgrep_arguments
     local search_dirs = opts.search_dirs
@@ -158,6 +247,7 @@ local live_grep = function(opts)
         })
         :find()
 end
+
 local find_files = function(opts)
     local find_command = (function()
         if opts.find_command then
@@ -314,6 +404,8 @@ end
 local jira = function(opts)
     if opts.type == "grep" then
         live_grep(opts)
+    elseif opts.type=="grep_files" then
+        live_grep_files(opts)
     else
         find_files(opts)
     end
