@@ -124,7 +124,7 @@ local live_grep_files = function(opts)
         
         local search_file_content = flatten {{"rg", "--color=never", "--with-filename", "-l",  "---hidden", "--follow"}, prompt, search_list}
         local search_file_name = flatten {{"rg", "--color=never", "--files", "--hidden", "--follow","|", "rg", "--color=never", "-l"}, prompt, search_list}
-        local search_command = flatten {search_file_content , ";", search_file_name}
+        local search_command = flatten {search_file_content , ";", search_file_name, "|", "sort", "-u"}
          -- return flatten { { "rg", "--color=never", "--no-heading", "--with-filename", "--line-number", "--column", "--smart-case", "-l"}, "--", prompt, search_list }
         return search_command
     end
