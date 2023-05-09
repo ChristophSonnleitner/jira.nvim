@@ -17,6 +17,35 @@ local flatten = vim.tbl_flatten
 local filter = vim.tbl_filter
 
 
+local Sorter = require('telescope.sorters').Sorter
+
+local deduplicated_highlighter_only = function(opts)
+  opts = opts or {}
+  local fzy = opts.fzy_mod or require "telescope.algos.fzy"
+
+  -- Create a cache to store unique entries
+  local deduplicated_cache = {}
+
+  return Sorter:new {
+    scoring_function = function(_, _, display)
+      if deduplicated_cache[display] then
+        -- If the entry is already in the cache, return a low score to mark it as a duplicate
+        return -1
+      else
+        -- If the entry is not in the cache, add it and return a high score to keep it
+        deduplicated_cache[display] = true
+        return 1
+      end
+    end,
+
+    highlighter = function(_, prompt, display)
+      return fzy.positions(prompt, display)
+    end,
+  }
+end
+
+
+
 local opts_contain_invert = function(args)
     local invert = false
     local files_with_matches = false
@@ -138,7 +167,8 @@ local live_grep_files = function(opts)
             previewer = conf.grep_previewer(opts),
             -- TODO: It would be cool to use `--json` output for this
             -- and then we could get the highlight positions directly.
-            sorter = sorters.highlighter_only(opts),
+            -- sorter = sorters.highlighter_only(opts),
+            sorter = deduplicated_highlighter_only(opts)
 
             attach_mappings = function(_, map)
                 map("i", "<c-space>", actions.to_fuzzy_refine)
