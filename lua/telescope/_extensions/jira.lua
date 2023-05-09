@@ -121,11 +121,13 @@ local live_grep_files = function(opts)
         elseif search_dirs then
             search_list = search_dirs
         end
-        
-        local search_file_content = flatten {{"rg", "--color=never", "--with-filename", "-l",  "---hidden", "--follow"}, prompt, search_list}
-        local search_file_name = flatten {{"rg", "--color=never", "--files", "--hidden", "--follow","|", "rg", "--color=never", "-l"}, prompt, search_list}
-        local search_command = flatten {search_file_content , ";", search_file_name, "|", "sort", "-u"}
-         -- return flatten { { "rg", "--color=never", "--no-heading", "--with-filename", "--line-number", "--column", "--smart-case", "-l"}, "--", prompt, search_list }
+
+        local search_file_content = flatten { { "rg", "--color=never", "--with-filename", "-l", "---hidden", "--follow" },
+            prompt, search_list }
+        local search_file_name = flatten { { "rg", "--color=never", "--files", "--hidden", "--follow", "|", "rg",
+            "--color=never", "-l" }, prompt, search_list }
+        local search_command = flatten { "(", search_file_content, ";", search_file_name, ")", "|", "sort", "-u" }
+        -- return flatten { { "rg", "--color=never", "--no-heading", "--with-filename", "--line-number", "--column", "--smart-case", "-l"}, "--", prompt, search_list }
         return search_command
     end
 
@@ -162,7 +164,7 @@ local live_grep_files = function(opts)
             end,
         })
         :find()
-    end
+end
 local live_grep = function(opts)
     local vimgrep_arguments = opts.vimgrep_arguments or conf.vimgrep_arguments
     local search_dirs = opts.search_dirs
@@ -407,7 +409,7 @@ end
 local jira = function(opts)
     if opts.type == "grep" then
         live_grep(opts)
-    elseif opts.type=="grep_files" then
+    elseif opts.type == "grep_files" then
         live_grep_files(opts)
     else
         find_files(opts)
