@@ -115,9 +115,6 @@ local live_grep_files = function(opts)
         end
 
         local search_list = {}
-        local search_file_content = {"rg", "--color=never", "--with-filename", "-l",  "---hidden", "--follow", "--glob", "'!.git'", prompt, search_list}
-        local search_file_name = {"rg", "--color=never", "--files", "--hidden", "--follow", "-l", "--glob", "'!.git'","|", "rg", "--color=always", "-l", prompt, search_list}
-        local search_command = flatten {{"("}, search_file_content, {";"}, search_file_name, {")","|", "sort", "-u"} }
 
         if grep_open_files then
             search_list = filelist
@@ -125,6 +122,10 @@ local live_grep_files = function(opts)
             search_list = search_dirs
         end
         
+        local search_file_content = {"rg", "--color=never", "--with-filename", "-l",  "---hidden", "--follow", "--glob", "'!.git'", prompt, search_list}
+        local search_file_name = {"rg", "--color=never", "--files", "--hidden", "--follow", "-l", "--glob", "'!.git'","|", "rg", "--color=always", "-l", prompt, search_list}
+        local search_command = flatten {{"("}, search_file_content, {";"}, search_file_name, {")","|", "sort", "-u"} }
+        print (search_command)
         -- return flatten { { "rg", "--color=never", "--no-heading", "--with-filename", "--line-number", "--column", "--smart-case", "-l"}, "--", prompt, search_list }
         return search_command
     end
