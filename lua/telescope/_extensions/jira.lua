@@ -124,7 +124,7 @@ local live_grep_files = function(opts)
         
         local search_file_content = {"rg", "--color=never", "--with-filename", "-l",  "---hidden", "--follow", "--glob", "'!.git'", prompt, search_list}
         local search_file_name = {"rg", "--color=never", "--files", "--hidden", "--follow", "-l", "--glob", "'!.git'","|", "rg", "--color=never", "-l", prompt, search_list}
-        local search_command = flatten {{search_file_content, {";"}, search_file_name }
+        local search_command = flatten {search_file_content, {";"}, search_file_name }
         error(search_command)
         io.popen(search_command.." > ~/testcommand.txt")
         -- return flatten { { "rg", "--color=never", "--no-heading", "--with-filename", "--line-number", "--column", "--smart-case", "-l"}, "--", prompt, search_list }
