@@ -107,9 +107,7 @@ local live_grep_files = function(opts)
     local args = flatten { vimgrep_arguments, additional_args }
     opts.__inverted, opts.__matches = opts_contain_invert(args)
 
-    
-
-    local live_grepper = finders.new_job(function(prompt)
+    local find_command = function(prompt)
         if not prompt or prompt == "" then
             return nil
         end
@@ -122,14 +120,13 @@ local live_grep_files = function(opts)
             search_list = search_dirs
         end
 
-        return flatten { args, "--", prompt, search_list }
-    end, opts.entry_maker or make_entry.gen_from_vimgrep(opts), opts.max_results, opts.cwd)
+        return flatten { { "rg", "--color=never", "--no-heading", "--with-filename", "--line-number", "--column", "--smart-case" }, "--", prompt, search_list }
+    end
 
     pickers
         .new(opts, {
-            prompt_title = "Live Grep",
-            -- finder = live_grepper,
-            finder = finders.new_oneshot_job({ "rg", "--color=never", "--no-heading", "--with-filename", "--line-number", "--column", "--smart-case" }, opts),
+            prompt_title = "Live Grep Files",
+            finder = finders.new_oneshot_job(find_command, opts),
             previewer = conf.grep_previewer(opts),
             -- TODO: It would be cool to use `--json` output for this
             -- and then we could get the highlight positions directly.
