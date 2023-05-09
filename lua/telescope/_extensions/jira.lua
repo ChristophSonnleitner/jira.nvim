@@ -44,6 +44,37 @@ local deduplicated_highlighter_only = function(opts)
   }
 end
 
+local function make_distinct()
+  local seen = {}
+  return function(entry)
+    if not seen[entry] then
+      seen[entry] = true
+      return false
+    end
+    return true
+  end
+end
+
+highlighter_only_distinct = function(opts)
+  opts = opts or {}
+  local fzy = opts.fzy_mod or require "telescope.algos.fzy"
+
+  local is_duplicate = make_distinct()
+
+  return Sorter:new {
+    scoring_function = function(_, prompt, _, entry)
+      if is_duplicate(entry.ordinal) then
+        return -1
+      end
+      return 1
+    end,
+
+    highlighter = function(_, prompt, display)
+      return fzy.positions(prompt, display)
+    end,
+  }
+end
+
 
 
 local opts_contain_invert = function(args)
@@ -168,7 +199,8 @@ local live_grep_files = function(opts)
             -- TODO: It would be cool to use `--json` output for this
             -- and then we could get the highlight positions directly.
             -- sorter = sorters.highlighter_only(opts),
-            sorter = deduplicated_highlighter_only(opts),
+            -- sorter = deduplicated_highlighter_only(opts),
+               sorter = highlighter_only_distinct(opts),
 
             attach_mappings = function(_, map)
                 map("i", "<c-space>", actions.to_fuzzy_refine)
