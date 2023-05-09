@@ -90,8 +90,8 @@ local function rg_content_and_name(opts)
     sorter = sorters.highlighter_only(opts),
     previewer = previewers.vimgrep.new(opts),
     attach_mappings = function(_, map)
-      map('i', '<CR>', telescope.actions.select_default)
-      map('n', '<CR>', telescope.actions.select_default)
+      map('i', '<CR>', actions.select_default)
+      map('n', '<CR>', actions.select_default)
       return true
     end,
   }):find()
