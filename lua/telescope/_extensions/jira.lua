@@ -15,90 +15,73 @@ local conf = require("telescope.config").values
 local log = require "telescope.log"
 local flatten = vim.tbl_flatten
 local filter = vim.tbl_filter
-
+local lib = require('telescope._extensions.lib')
 
 local Sorter = require('telescope.sorters').Sorter
 
-local deduplicated_highlighter_only = function(opts)
-    opts = opts or {}
-    local fzy = opts.fzy_mod or require "telescope.algos.fzy"
-
-    -- Create a cache to store unique entries
-    local deduplicated_cache = {}
-
-    return Sorter:new {
-        scoring_function = function(_, _, display)
-            if deduplicated_cache[display] then
-                -- If the entry is already in the cache, return a low score to mark it as a duplicate
-                return -1
-            else
-                -- If the entry is not in the cache, add it and return a high score to keep it
-                deduplicated_cache[display] = true
-                return 1
-            end
-        end,
-
-        highlighter = function(_, prompt, display)
-            return fzy.positions(prompt, display)
-        end,
-    }
-end
-
-local function make_distinct()
-    local seen = {}
-    return function(entry)
-        if not seen[entry] then
-            seen[entry] = true
-            return false
-        end
-        return true
+function split(inputstr)
+    local t = {}
+    for str in string.gmatch(inputstr, "([^%s]+)") do
+        table.insert(t, str)
     end
+    return t
 end
 
-highlighter_only_distinct = function(opts)
-    opts = opts or {}
-    local fzy = opts.fzy_mod or require "telescope.algos.fzy"
+local function word_search_picker(opts)
+  local words = { "word1", "word2", "word3"} -- replace with your words
+  local matches = {}
 
-    local is_duplicate = make_distinct()
+  -- Get a list of all files in the current directory.
+  local p = io.popen('find . -type f')  -- Open a file read the output of the find command.
+  for file in p:lines() do  -- Loop over each line in the output.
 
-    return Sorter:new {
-        scoring_function = function(_, prompt, _, entry)
-            if is_duplicate(entry.ordinal) then
-                return -1
-            end
-            return 1
-        end,
+    for _, word in ipairs(words) do  -- Loop over each word in the words array.
+      -- Check if the word is in the file.
+      if os.execute('grep -q ' .. word .. ' ' .. file) == 0 then
+        matches[file] = (matches[file] or 0) + 1
+      end
 
-        highlighter = function(_, prompt, display)
-            return fzy.positions(prompt, display)
-        end,
-    }
+      -- Check if the word is in the filename.
+      if file:match(word) then
+        matches[file] = (matches[file] or 0) + 1
+      end
+    end
+
+  end
+  p:close()
+
+  -- Convert the matches table into a list for Telescope.
+  local match_list = {}
+  for file, count in pairs(matches) do
+    table.insert(match_list, file .. ": " .. count)
+  end
+
+  pickers.new({}, {
+    prompt_title = 'Word Search',
+    finder = finders.new_table({
+      results = match_list,
+      entry_maker = function(line)
+        return {
+          valid = true,
+          value = line,
+          ordinal = line,
+          display = line,
+        }
+      end,
+    }),
+    sorter = sorters.get_generic_fuzzy_sorter(),
+    attach_mappings = function(prompt_bufnr, map)
+      actions.select_default:replace(function()
+        local selection = actions.get_selected_entry()
+        actions.close(prompt_bufnr)
+        local filename = selection.value:match("^(.-):")
+        vim.cmd('edit ' .. filename)
+      end)
+
+      return true
+    end,
+  }):find()
 end
-
-local function rg_content_and_name(opts)
-    opts = opts or {}
-
-    local word = opts.word or ""
-    local cmd1 = "(rg --color=always --line-number --hidden --follow --glob '!.git' " ..
-    word .. "; rg --color=always --files --hidden --follow --glob '!.git' | rg --color=always " .. word .. ") | sort -u"
-    local cmd = "rg -l " .. word .. " && find \"directory_path\" -type f -iname \"*" .. word .. "*\" | sort | uniq"
-    local cmd = "find_content_or_name ".. word .."~/Jira"
-    pickers.new(opts, {
-        prompt_title = 'Ripgrep Content and Name',
-        finder = finders.new_oneshot_job(
-            vim.fn.split(cmd, " "),
-            opts
-        ),
-        sorter = sorters.highlighter_only(opts),
-        previewer = previewers.vimgrep.new(opts),
-        attach_mappings = function(_, map)
-            map('i', '<CR>', actions.select_default)
-            map('n', '<CR>', actions.select_default)
-            return true
-        end,
-    }):find()
-end
-
 
 
 
@@ -504,6 +487,8 @@ local jira = function(opts)
     elseif opts.type == "grep_files" then
         live_grep_files(opts)
         -- rg_content_and_name(opts)
+        -- word_search_picker()
+        lib.word_search_picker(opts)
     else
         find_files(opts)
     end
