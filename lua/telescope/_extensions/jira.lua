@@ -190,7 +190,7 @@ local live_grep_files = function(opts)
             search_list = search_dirs
         end
 
-        prompt = prompt:gsub(" ", ".*")
+        -- prompt = prompt:gsub(" ", ".*")
 
 
         local search_file_content = flatten { { "rg", "--color=never", "--with-filename", "-l", "---hidden", "--follow" },
