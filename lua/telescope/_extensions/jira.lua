@@ -489,7 +489,7 @@ local jira = function(opts)
         live_grep_files(opts)
         -- rg_content_and_name(opts)
         -- word_search_picker()
-        lib.word_search_picker(opts)
+        -- lib.word_search_picker(opts)
     else
         find_files(opts)
     end
